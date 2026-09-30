@@ -48,7 +48,7 @@ The API Guideline and JWS documentation are provided as PDFs; their specificatio
 | [h2-market-openapi-specifications](https://github.com/H2-Market-Specifications/h2-market-openapi-specifications) | Message-specific OpenAPI definitions. |
 | [h2-directoryservice-specifications](https://github.com/H2-Market-Specifications/h2-directoryservice-specifications) | Directory service specifications and the companion DirectoryRecord schema. |
 
-Companion repositories may require separate access. The publication repository for directory service specifications currently contains no files; the external DirectoryRecord dependency is not included in this guidelines publication.
+Companion repositories may require separate access. The DirectoryRecord schema is provided in the directory service repository; see the [schema definitions](https://github.com/H2-Market-Specifications/h2-directoryservice-specifications/tree/main/specifications/schemas/v0.9) for the matching publication version.
 
 ## Questions and Feedback
 

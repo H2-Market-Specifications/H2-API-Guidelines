@@ -1,0 +1,302 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: urn:h2:directory:ws:client-message:v1
+$defs:
+  messageId:
+    type: string
+    format: uuid
+    pattern: ^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$
+  timestampUtc:
+    type: string
+    format: date-time
+    pattern: Z$
+  signature:
+    type: string
+    pattern: ^[A-Za-z0-9_-]+\.\.[A-Za-z0-9_-]+$
+    maxLength: 4096
+  entryKey:
+    type: object
+    additionalProperties: false
+    required:
+    - providerId
+    - apiId
+    - majorVersion
+    properties:
+      providerId:
+        type: string
+        pattern: ^[0-9]{13}$
+      apiId:
+        type: string
+        pattern: ^H2API[0-9]{5}$
+      majorVersion:
+        type: integer
+        minimum: 1
+        maximum: 2147483647
+  availabilityStopPayload:
+    type: object
+    additionalProperties: false
+    required:
+    - providerId
+    - apiId
+    - majorVersion
+    - reason
+    properties:
+      providerId:
+        type: string
+        pattern: ^[0-9]{13}$
+      apiId:
+        type: string
+        pattern: ^H2API[0-9]{5}$
+      majorVersion:
+        type: integer
+        minimum: 1
+        maximum: 2147483647
+      reason:
+        type: string
+        enum:
+        - serviceUnavailable
+        - clientShutdown
+        - connectionMigration
+        - plannedRestart
+        - other
+  SubscribeMessage:
+    type: object
+    additionalProperties: false
+    required:
+    - type
+    - messageId
+    - correlationId
+    - timestamp
+    - payload
+    - signature
+    properties:
+      type:
+        const: subscribe
+      messageId:
+        $ref: '#/$defs/messageId'
+      correlationId:
+        type: 'null'
+      timestamp:
+        $ref: '#/$defs/timestampUtc'
+      signature:
+        $ref: '#/$defs/signature'
+      payload:
+        $ref: '#/$defs/entryKey'
+  UnsubscribeMessage:
+    type: object
+    additionalProperties: false
+    required:
+    - type
+    - messageId
+    - correlationId
+    - timestamp
+    - payload
+    - signature
+    properties:
+      type:
+        const: unsubscribe
+      messageId:
+        $ref: '#/$defs/messageId'
+      correlationId:
+        type: 'null'
+      timestamp:
+        $ref: '#/$defs/timestampUtc'
+      signature:
+        $ref: '#/$defs/signature'
+      payload:
+        $ref: '#/$defs/entryKey'
+  AvailabilityStartMessage:
+    type: object
+    additionalProperties: false
+    required:
+    - type
+    - messageId
+    - correlationId
+    - timestamp
+    - payload
+    - signature
+    properties:
+      type:
+        const: availabilityStart
+      messageId:
+        $ref: '#/$defs/messageId'
+      correlationId:
+        type: 'null'
+      timestamp:
+        $ref: '#/$defs/timestampUtc'
+      signature:
+        $ref: '#/$defs/signature'
+      payload:
+        $ref: '#/$defs/entryKey'
+  AvailabilityHeartbeatMessage:
+    type: object
+    additionalProperties: false
+    required:
+    - type
+    - messageId
+    - correlationId
+    - timestamp
+    - payload
+    - signature
+    properties:
+      type:
+        const: availabilityHeartbeat
+      messageId:
+        $ref: '#/$defs/messageId'
+      correlationId:
+        type: 'null'
+      timestamp:
+        $ref: '#/$defs/timestampUtc'
+      signature:
+        $ref: '#/$defs/signature'
+      payload:
+        $ref: '#/$defs/entryKey'
+  AvailabilityStopMessage:
+    type: object
+    additionalProperties: false
+    required:
+    - type
+    - messageId
+    - correlationId
+    - timestamp
+    - payload
+    - signature
+    properties:
+      type:
+        const: availabilityStop
+      messageId:
+        $ref: '#/$defs/messageId'
+      correlationId:
+        type: 'null'
+      timestamp:
+        $ref: '#/$defs/timestampUtc'
+      signature:
+        $ref: '#/$defs/signature'
+      payload:
+        $ref: '#/$defs/availabilityStopPayload'
+  ClientMessage:
+    title: ClientMessage
+    description: Eine der fünf signaturpflichtigen Client-Nachrichten.
+    oneOf:
+    - $ref: '#/$defs/SubscribeMessage'
+    - $ref: '#/$defs/UnsubscribeMessage'
+    - $ref: '#/$defs/AvailabilityStartMessage'
+    - $ref: '#/$defs/AvailabilityHeartbeatMessage'
+    - $ref: '#/$defs/AvailabilityStopMessage'
+oneOf:
+- type: object
+  additionalProperties: false
+  required:
+  - type
+  - messageId
+  - correlationId
+  - timestamp
+  - payload
+  - signature
+  properties:
+    type:
+      const: subscribe
+    messageId:
+      $ref: '#/$defs/messageId'
+    correlationId:
+      type: 'null'
+    timestamp:
+      $ref: '#/$defs/timestampUtc'
+    signature:
+      $ref: '#/$defs/signature'
+    payload:
+      $ref: '#/$defs/entryKey'
+- type: object
+  additionalProperties: false
+  required:
+  - type
+  - messageId
+  - correlationId
+  - timestamp
+  - payload
+  - signature
+  properties:
+    type:
+      const: unsubscribe
+    messageId:
+      $ref: '#/$defs/messageId'
+    correlationId:
+      type: 'null'
+    timestamp:
+      $ref: '#/$defs/timestampUtc'
+    signature:
+      $ref: '#/$defs/signature'
+    payload:
+      $ref: '#/$defs/entryKey'
+- type: object
+  additionalProperties: false
+  required:
+  - type
+  - messageId
+  - correlationId
+  - timestamp
+  - payload
+  - signature
+  properties:
+    type:
+      const: availabilityStart
+    messageId:
+      $ref: '#/$defs/messageId'
+    correlationId:
+      type: 'null'
+    timestamp:
+      $ref: '#/$defs/timestampUtc'
+    signature:
+      $ref: '#/$defs/signature'
+    payload:
+      $ref: '#/$defs/entryKey'
+- type: object
+  additionalProperties: false
+  required:
+  - type
+  - messageId
+  - correlationId
+  - timestamp
+  - payload
+  - signature
+  properties:
+    type:
+      const: availabilityHeartbeat
+    messageId:
+      $ref: '#/$defs/messageId'
+    correlationId:
+      type: 'null'
+    timestamp:
+      $ref: '#/$defs/timestampUtc'
+    signature:
+      $ref: '#/$defs/signature'
+    payload:
+      $ref: '#/$defs/entryKey'
+- type: object
+  additionalProperties: false
+  required:
+  - type
+  - messageId
+  - correlationId
+  - timestamp
+  - payload
+  - signature
+  properties:
+    type:
+      const: availabilityStop
+    messageId:
+      $ref: '#/$defs/messageId'
+    correlationId:
+      type: 'null'
+    timestamp:
+      $ref: '#/$defs/timestampUtc'
+    signature:
+      $ref: '#/$defs/signature'
+    payload:
+      $ref: '#/$defs/availabilityStopPayload'
+title: WebSocket-Client-Nachrichten des Verzeichnisdienstes
+$comment: Kanonische externe Fassung des in WS-SPEC Kapitel 11.3 eingebetteten Schemas. Die Root-Semantik bleibt unverändert;
+  benannte $defs dienen OpenAPI/AsyncAPI-Referenzen.
+x-h2-source:
+  document: WebSocket_Verzeichnisdienst_Schnittstellenbeschreibung.docx
+  chapter: '11.3'
+  sourceSha256: 673d2e92e648df1f018958538517f8fe9f44431bbc9d56949e91cc457c0eee10

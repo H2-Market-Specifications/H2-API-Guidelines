@@ -1,0 +1,343 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: urn:h2:directory:ws:server-message:v1
+$defs:
+  messageId:
+    type: string
+    format: uuid
+    pattern: ^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$
+  timestampUtc:
+    type: string
+    format: date-time
+    pattern: Z$
+  revision:
+    type: integer
+    minimum: 1
+    maximum: 9007199254740991
+  directoryRecord:
+    $ref: urn:h2:directory:record:v1#/$defs/DirectoryRecord
+  entryKey:
+    type: object
+    required:
+    - providerId
+    - apiId
+    - majorVersion
+    properties:
+      providerId:
+        type: string
+        pattern: ^[0-9]{13}$
+      apiId:
+        type: string
+        pattern: ^H2API[0-9]{5}$
+      majorVersion:
+        type: integer
+        minimum: 1
+        maximum: 2147483647
+  baseEnvelope:
+    type: object
+    required:
+    - type
+    - messageId
+    - correlationId
+    - timestamp
+    - payload
+    properties:
+      type:
+        type: string
+        minLength: 1
+      messageId:
+        $ref: '#/$defs/messageId'
+      correlationId:
+        oneOf:
+        - $ref: '#/$defs/messageId'
+        - type: 'null'
+      timestamp:
+        $ref: '#/$defs/timestampUtc'
+      payload:
+        type: object
+      signature: false
+  subscribeAckPayload:
+    type: object
+    required:
+    - providerId
+    - apiId
+    - majorVersion
+    - revision
+    properties:
+      providerId:
+        type: string
+        pattern: ^[0-9]{13}$
+      apiId:
+        type: string
+        pattern: ^H2API[0-9]{5}$
+      majorVersion:
+        type: integer
+        minimum: 1
+        maximum: 2147483647
+      revision:
+        $ref: '#/$defs/revision'
+  availabilityAckPayload:
+    type: object
+    required:
+    - providerId
+    - apiId
+    - majorVersion
+    - operation
+    properties:
+      providerId:
+        type: string
+        pattern: ^[0-9]{13}$
+      apiId:
+        type: string
+        pattern: ^H2API[0-9]{5}$
+      majorVersion:
+        type: integer
+        minimum: 1
+        maximum: 2147483647
+      operation:
+        type: string
+        enum:
+        - start
+        - heartbeat
+        - stop
+      validUntil:
+        $ref: '#/$defs/timestampUtc'
+    allOf:
+    - if:
+        properties:
+          operation:
+            enum:
+            - start
+            - heartbeat
+        required:
+        - operation
+      then:
+        required:
+        - validUntil
+    - if:
+        properties:
+          operation:
+            const: stop
+        required:
+        - operation
+      then:
+        not:
+          required:
+          - validUntil
+  notificationPayload:
+    type: object
+    required:
+    - eventType
+    - providerId
+    - apiId
+    - majorVersion
+    - revision
+    - entry
+    properties:
+      eventType:
+        type: string
+        minLength: 1
+      providerId:
+        type: string
+        pattern: ^[0-9]{13}$
+      apiId:
+        type: string
+        pattern: ^H2API[0-9]{5}$
+      majorVersion:
+        type: integer
+        minimum: 1
+        maximum: 2147483647
+      revision:
+        $ref: '#/$defs/revision'
+      entry:
+        oneOf:
+        - $ref: '#/$defs/directoryRecord'
+        - type: 'null'
+      reason:
+        type: string
+        pattern: ^[a-z][a-zA-Z0-9]{2,63}$
+    oneOf:
+    - properties:
+        eventType:
+          const: entryDeleted
+        entry:
+          type: 'null'
+        reason: false
+    - required:
+      - reason
+      properties:
+        eventType:
+          const: subscriptionEnded
+        entry:
+          type: 'null'
+    - properties:
+        eventType:
+          enum:
+          - entryUpserted
+          - statusChanged
+          - serviceInfoChanged
+        entry:
+          $ref: '#/$defs/directoryRecord'
+        reason: false
+    - properties:
+        eventType:
+          not:
+            enum:
+            - entryUpserted
+            - entryDeleted
+            - statusChanged
+            - serviceInfoChanged
+            - subscriptionEnded
+  errorPayload:
+    type: object
+    required:
+    - code
+    - title
+    properties:
+      code:
+        type: string
+        pattern: ^ERR-[A-Z]{3,4}-[0-9]{3}$
+      title:
+        type: string
+        minLength: 1
+        maxLength: 256
+      detail:
+        type: string
+        maxLength: 1024
+      context:
+        type: object
+  SubscribeAckMessage:
+    title: SubscribeAckMessage
+    allOf:
+    - $ref: '#/$defs/baseEnvelope'
+    - properties:
+        type:
+          const: subscribeAck
+        correlationId:
+          $ref: '#/$defs/messageId'
+        payload:
+          $ref: '#/$defs/subscribeAckPayload'
+  UnsubscribeAckMessage:
+    title: UnsubscribeAckMessage
+    allOf:
+    - $ref: '#/$defs/baseEnvelope'
+    - properties:
+        type:
+          const: unsubscribeAck
+        correlationId:
+          $ref: '#/$defs/messageId'
+        payload:
+          $ref: '#/$defs/entryKey'
+  AvailabilityAckMessage:
+    title: AvailabilityAckMessage
+    allOf:
+    - $ref: '#/$defs/baseEnvelope'
+    - properties:
+        type:
+          const: availabilityAck
+        correlationId:
+          $ref: '#/$defs/messageId'
+        payload:
+          $ref: '#/$defs/availabilityAckPayload'
+  NotificationMessage:
+    title: NotificationMessage
+    allOf:
+    - $ref: '#/$defs/baseEnvelope'
+    - properties:
+        type:
+          const: notification
+        correlationId:
+          type: 'null'
+        payload:
+          $ref: '#/$defs/notificationPayload'
+  ErrorMessage:
+    title: ErrorMessage
+    allOf:
+    - $ref: '#/$defs/baseEnvelope'
+    - properties:
+        type:
+          const: error
+        correlationId:
+          oneOf:
+          - $ref: '#/$defs/messageId'
+          - type: 'null'
+        payload:
+          $ref: '#/$defs/errorPayload'
+  UnknownServerMessage:
+    title: UnknownServerMessage
+    allOf:
+    - $ref: '#/$defs/baseEnvelope'
+    - properties:
+        type:
+          not:
+            enum:
+            - subscribeAck
+            - unsubscribeAck
+            - availabilityAck
+            - notification
+            - error
+  ServerMessage:
+    title: ServerMessage
+    description: Bekannte Server-Nachrichten sowie unbekannte künftige Server-Nachrichtentypen.
+    oneOf:
+    - $ref: '#/$defs/SubscribeAckMessage'
+    - $ref: '#/$defs/UnsubscribeAckMessage'
+    - $ref: '#/$defs/AvailabilityAckMessage'
+    - $ref: '#/$defs/NotificationMessage'
+    - $ref: '#/$defs/ErrorMessage'
+    - $ref: '#/$defs/UnknownServerMessage'
+allOf:
+- $ref: '#/$defs/baseEnvelope'
+- oneOf:
+  - properties:
+      type:
+        const: subscribeAck
+      correlationId:
+        $ref: '#/$defs/messageId'
+      payload:
+        $ref: '#/$defs/subscribeAckPayload'
+  - properties:
+      type:
+        const: unsubscribeAck
+      correlationId:
+        $ref: '#/$defs/messageId'
+      payload:
+        $ref: '#/$defs/entryKey'
+  - properties:
+      type:
+        const: availabilityAck
+      correlationId:
+        $ref: '#/$defs/messageId'
+      payload:
+        $ref: '#/$defs/availabilityAckPayload'
+  - properties:
+      type:
+        const: notification
+      correlationId:
+        type: 'null'
+      payload:
+        $ref: '#/$defs/notificationPayload'
+  - properties:
+      type:
+        const: error
+      correlationId:
+        oneOf:
+        - $ref: '#/$defs/messageId'
+        - type: 'null'
+      payload:
+        $ref: '#/$defs/errorPayload'
+  - properties:
+      type:
+        not:
+          enum:
+          - subscribeAck
+          - unsubscribeAck
+          - availabilityAck
+          - notification
+          - error
+title: WebSocket-Server-Nachrichten des Verzeichnisdienstes
+$comment: Kanonische externe Fassung des in WS-SPEC Kapitel 11.4 eingebetteten Schemas. Die Root-Semantik bleibt unverändert;
+  benannte $defs dienen OpenAPI/AsyncAPI-Referenzen.
+x-h2-source:
+  document: WebSocket_Verzeichnisdienst_Schnittstellenbeschreibung.docx
+  chapter: '11.4'
+  sourceSha256: 673d2e92e648df1f018958538517f8fe9f44431bbc9d56949e91cc457c0eee10
